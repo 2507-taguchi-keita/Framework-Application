@@ -20,6 +20,8 @@
         <div class="text">
             投稿 : <span th:text="${content.content}"/>
         </div>
+        <!-- 返信コメントの表示 -->
+
         <div class="button-container">
             <div class="delete-button">
                 <form th:action="@{/delete/{id}(id=${content.id})}" th:method="delete">
@@ -31,6 +33,12 @@
                     <input type="submit" value="編集">
                 </a>
             </div>
+        </div>
+        <div class="comment">
+            <form th:action="@{/comment/{contentId}(contentId=${content.id})}" method="post" th:object="${commentForm}">
+                <textarea class="tweet-box" th:field="*{content}" size="20" maxlength="200"></textarea><br/>
+                <input type="submit" value="返信">
+            </form>
         </div>
     </div>
 </div>

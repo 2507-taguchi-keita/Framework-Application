@@ -1,18 +1,23 @@
 package com.example.forum.service;
 
+import com.example.forum.controller.form.CommentForm;
 import com.example.forum.controller.form.ReportForm;
 import com.example.forum.repository.ReportRepository;
+import com.example.forum.repository.entity.Comment;
 import com.example.forum.repository.entity.Report;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import com.example.forum.repository.CommentRepository;
 
 @Service
 public class ReportService {
     @Autowired
     ReportRepository reportRepository;
+    @Autowired
+    private CommentRepository commentRepository;
 
     /*
      * レコード全件取得処理
@@ -20,6 +25,13 @@ public class ReportService {
     public List<ReportForm> findAllReport() {
         List<Report> results = reportRepository.findAllByOrderByIdDesc();
         List<ReportForm> reports = setReportForm(results);
+        // 1件ずつコメントを取得してセット
+        for (ReportForm reportForm : reports) {
+            // reportFormのIDに紐づくコメントを取得（コメントフォームのリスト）
+            List<Comment> commentList = commentRepository.findByContentId(reportForm.getId());
+            // 取得したコメントリストをreportFormにセット
+            reportForm.setComments(commentList);
+        }
         return reports;
     }
 
