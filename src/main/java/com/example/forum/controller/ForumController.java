@@ -2,6 +2,7 @@ package com.example.forum.controller;
 
 import com.example.forum.controller.form.CommentForm;
 import com.example.forum.controller.form.ReportForm;
+import com.example.forum.repository.entity.Comment;
 import com.example.forum.service.CommentService;
 import com.example.forum.service.ReportService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,12 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
+import java.time.LocalDate;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 @Controller
@@ -64,7 +71,7 @@ public class ForumController {
     //削除処理(削除ボタンを押した後)
     @DeleteMapping("/delete/{id}")
     //contentだと、同じ内容が入力されている可能性があるため、idを引数にする
-    public ModelAndView deleteContent(@PathVariable Integer id){
+    public ModelAndView deleteContent(@PathVariable Integer id) {
         //Service層にある投稿削除の処理を呼び出して実行する
         //URLから取得してきたIDはレコードを指定する際に必要なので、引数に指定しReportServiceを呼出
         reportService.deleteReport(id);
@@ -92,7 +99,7 @@ public class ForumController {
     //編集処理(更新ボタンを押下した時)
     @PutMapping("/update/{id}")
     //編集画面から、id および formModel の変数名で入力された投稿内容を受け取る
-    public ModelAndView editContent(@PathVariable Integer id, @ModelAttribute("formModel") ReportForm report){
+    public ModelAndView editContent(@PathVariable Integer id, @ModelAttribute("formModel") ReportForm report) {
         // UrlParameterのidを更新するentityにセット
         report.setId(id);
         // 編集した投稿を更新
@@ -103,10 +110,53 @@ public class ForumController {
 
     //投稿へのコメント機能を追加(返信ボタンを押した後)
     @PostMapping("/comment/{contentId}")
-    public ModelAndView commentContent(@PathVariable Integer contentId, @ModelAttribute("formModel") CommentForm comment){
+    public ModelAndView commentContent(@PathVariable Integer contentId, @ModelAttribute("formModel") CommentForm comment) {
         comment.setContentId(contentId);
         commentService.saveComment(comment);
         return new ModelAndView("redirect:/");
+    }
+
+    //削除処理(削除ボタンを押した後)
+    @DeleteMapping("/comment/delete/{id}")
+    //contentだと、同じ内容が入力されている可能性があるため、idを引数にする
+    public ModelAndView deleteComment(@PathVariable Integer id) {
+        //Service層にある投稿削除の処理を呼び出して実行する
+        //URLから取得してきたIDはレコードを指定する際に必要なので、引数に指定しReportServiceを呼出
+        commentService.deleteCommentById(id);
+        // rootつまり、⑤サーバー側：投稿内容表示機能の処理へリダイレクト
+        return new ModelAndView("redirect:/");
+    }
+
+    //返信コメントの編集画面表示処理
+    @GetMapping("/comment/edit/{id}")
+    public ModelAndView editCommentForm(@PathVariable Integer id) {
+        ModelAndView mav = new ModelAndView();
+        CommentForm comment = commentService.findCommentById(id); // これをサービスに実装して取得する
+        mav.addObject("commentForm", comment);
+        mav.setViewName("/comment_edit"); // 編集用テンプレート（作成する）
+        return mav;
+    }
+
+    //返信コメントの表示処理
+    @PutMapping("/comment/update/{id}")
+    public ModelAndView updateComment(@PathVariable Integer id, @ModelAttribute("commentForm") CommentForm commentForm) {
+        commentForm.setId(id);
+        commentService.saveComment(commentForm);
+        return new ModelAndView("redirect:/");
+    }
+
+    //日付で絞り込む処理(Serviceから渡ってきた処理を受け取る)
+    @GetMapping("/date")
+    public ModelAndView searchComment(@RequestParam String startDate, @RequestParam String endDate) throws ParseException {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        Date start = sdf.parse(startDate);
+        Date end = sdf.parse(endDate);
+        List<Comment> comments = commentService.findByCreatedDateBetween(start, end);
+        ModelAndView mav = new ModelAndView("top");
+        mav.addObject("commentList", comments);
+        mav.addObject("startDate", startDate);
+        mav.addObject("endDate", endDate);
+        return mav;
     }
 }
 

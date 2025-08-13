@@ -5,6 +5,7 @@ import com.example.forum.controller.form.ReportForm;
 import com.example.forum.repository.CommentRepository;
 import com.example.forum.repository.entity.Comment;
 import com.example.forum.repository.entity.Report;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -49,9 +50,28 @@ public class CommentService {
      * レコード追加・編集機能
      */
     public void saveComment(CommentForm reqComment) {
-        Comment saveComment = setCommentEntity(reqComment);
-        //saveメソッドは新規登録（insert）、更新（update）の両方が使える→更新のメソッドは不要
-        commentRepository.save(saveComment);
+        Comment comment;
+        if (reqComment.getId() != null) {
+            // 更新の場合はDBから元のエンティティを取得する
+            comment = commentRepository.findById(reqComment.getId()).orElse(new Comment());
+            // 作成日時はDBの値をそのまま使う
+        } else {
+            // 新規の場合は新規エンティティ作成
+            comment = new Comment();
+            comment.setCreatedDate(new Date()); // 新規作成日時をセット
+        }
+
+        comment.setContentId(reqComment.getContentId());
+        comment.setUserId(reqComment.getUserId());
+        comment.setContent(reqComment.getContent());
+        comment.setUpdatedDate(new Date()); // 更新日時は今
+
+        // もし更新でcreatedDateがまだnullならセット
+        if (comment.getCreatedDate() == null) {
+            comment.setCreatedDate(new Date());
+        }
+
+        commentRepository.save(comment);
     }
 
     /*
@@ -66,5 +86,35 @@ public class CommentService {
         comment.setCreatedDate(reqComment.getCreatedDate());
         comment.setUpdatedDate(reqComment.getUpdatedDate());
         return comment;
+    }
+
+    public List<CommentForm> findCommentsByContentId(int contentId) {
+        // CommentRepositoryにcontentIdで取得するメソッドが必要（下で補足）
+        List<Comment> results = commentRepository.findByContentIdOrderByIdAsc(contentId);
+        return setCommentForm(results);
+    }
+
+    @Transactional
+    public void deleteCommentById(Integer id) {
+        commentRepository.deleteCommentById(id);
+    }
+
+    public CommentForm findCommentById(Integer id) {
+        Comment comment = commentRepository.findById(id).orElse(null);
+        if (comment == null) {
+            return null; // エラーハンドリングは必要に応じて
+        }
+        CommentForm form = new CommentForm();
+        form.setId(comment.getId());
+        form.setContentId(comment.getContentId());
+        form.setUserId(comment.getUserId());
+        form.setContent(comment.getContent());
+        form.setCreatedDate(comment.getCreatedDate());
+        form.setUpdatedDate(comment.getUpdatedDate());
+        return form;
+    }
+
+    public List<Comment> findByCreatedDateBetween(Date start, Date end) {
+        return commentRepository.findByCreatedDateBetween(start, end);
     }
 }

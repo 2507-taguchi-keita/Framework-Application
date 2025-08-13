@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>返信コメント編集</title>
+</head>
+<body>
+<h2>返信コメントの編集</h2>
+<form th:action="@{/comment/update/{id}(id=${commentForm.id})}" th:object="${commentForm}" method="post">
+    <input type="hidden" name="_method" value="put" />
+    <label>編集内容</label><br />
+    <textarea th:field="*{content}" rows="5" cols="50" maxlength="200"></textarea><br />
+    <input type="hidden" th:field="*{id}" />
+    <input type="hidden" th:field="*{contentId}" />
+    <input type="hidden" th:field="*{createdDate}" />
+    <input type="submit" value="更新" />
+</form>
+<form action="/" method="get" style="margin-top:10px;">
+    <input type="submit" value="戻る" />
+</form>
+</body>
+</html>

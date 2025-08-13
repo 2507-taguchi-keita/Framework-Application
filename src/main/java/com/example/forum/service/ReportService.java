@@ -19,17 +19,16 @@ public class ReportService {
     @Autowired
     private CommentRepository commentRepository;
 
+    @Autowired
+    CommentService commentService;
     /*
      * レコード全件取得処理
      */
     public List<ReportForm> findAllReport() {
         List<Report> results = reportRepository.findAllByOrderByIdDesc();
         List<ReportForm> reports = setReportForm(results);
-        // 1件ずつコメントを取得してセット
         for (ReportForm reportForm : reports) {
-            // reportFormのIDに紐づくコメントを取得（コメントフォームのリスト）
-            List<Comment> commentList = commentRepository.findByContentId(reportForm.getId());
-            // 取得したコメントリストをreportFormにセット
+            List<CommentForm> commentList = commentService.findCommentsByContentId(reportForm.getId());
             reportForm.setComments(commentList);
         }
         return reports;
