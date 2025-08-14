@@ -9,9 +9,9 @@
 <form th:action="@{/comment/update/{id}(id=${commentForm.id})}" th:object="${commentForm}" method="post">
     <input type="hidden" name="_method" value="put" />
     <label>編集内容</label><br />
-    <textarea th:field="*{content}" rows="5" cols="50" maxlength="200"></textarea><br />
+    <textarea th:field="*{comment}" rows="5" cols="50" maxlength="200"></textarea><br />
     <input type="hidden" th:field="*{id}" />
-    <input type="hidden" th:field="*{contentId}" />
+    <input type="hidden" th:field="*{commentId}" />
     <input type="hidden" th:field="*{createdDate}" />
     <input type="submit" value="更新" />
 </form>

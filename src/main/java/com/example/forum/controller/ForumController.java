@@ -3,6 +3,7 @@ package com.example.forum.controller;
 import com.example.forum.controller.form.CommentForm;
 import com.example.forum.controller.form.ReportForm;
 import com.example.forum.repository.entity.Comment;
+import com.example.forum.repository.entity.Report;
 import com.example.forum.service.CommentService;
 import com.example.forum.service.ReportService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import org.springframework.web.servlet.ModelAndView;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.LocalDate;
 import java.util.Calendar;
@@ -62,6 +64,8 @@ public class ForumController {
      */
     @PostMapping("/add")
     public ModelAndView addContent(@ModelAttribute("formModel") ReportForm reportForm) {
+        Report report = new Report();
+        report.setContent(reportForm.getContent());
         // 投稿をテーブルに格納
         reportService.saveReport(reportForm);
         // rootつまり、⑤サーバー側：投稿内容表示機能の処理へリダイレクト
@@ -109,9 +113,9 @@ public class ForumController {
     }
 
     //投稿へのコメント機能を追加(返信ボタンを押した後)
-    @PostMapping("/comment/{contentId}")
-    public ModelAndView commentContent(@PathVariable Integer contentId, @ModelAttribute("formModel") CommentForm comment) {
-        comment.setContentId(contentId);
+    @PostMapping("/comment/{commentId}")
+    public ModelAndView commentContent(@PathVariable Integer commentId, @ModelAttribute("formModel") CommentForm comment) {
+        comment.setCommentId(commentId);
         commentService.saveComment(comment);
         return new ModelAndView("redirect:/");
     }
@@ -133,7 +137,7 @@ public class ForumController {
         ModelAndView mav = new ModelAndView();
         CommentForm comment = commentService.findCommentById(id); // これをサービスに実装して取得する
         mav.addObject("commentForm", comment);
-        mav.setViewName("/comment_edit"); // 編集用テンプレート（作成する）
+        mav.setViewName("/comment_edit");
         return mav;
     }
 
@@ -147,11 +151,11 @@ public class ForumController {
 
     //日付で絞り込む処理(Serviceから渡ってきた処理を受け取る)
     @GetMapping("/date")
-    public ModelAndView searchComment(@RequestParam String startDate, @RequestParam String endDate) throws ParseException {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        Date start = sdf.parse(startDate);
-        Date end = sdf.parse(endDate);
-        List<Comment> comments = commentService.findByCreatedDateBetween(start, end);
+    public ModelAndView searchComment(@RequestParam String startDate, @RequestParam String endDate) {
+        LocalDateTime start = LocalDate.parse(startDate).atStartOfDay(); // 00:00スタート
+        LocalDateTime end = LocalDate.parse(endDate).atTime(23, 59, 59); // 23:59:59まで
+        List<Comment> comments = commentService.findByCreatedDateBetweenExcludingZero(start, end);
+
         ModelAndView mav = new ModelAndView("top");
         mav.addObject("commentList", comments);
         mav.addObject("startDate", startDate);

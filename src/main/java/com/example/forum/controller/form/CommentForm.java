@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.format.annotation.DateTimeFormat;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Getter
@@ -11,12 +12,12 @@ import java.util.Date;
 public class CommentForm {
 
     private Integer id;
-    private int contentId;
+    private int commentId;
     private int userId;
-    private String content;
-    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss.SSS")
-    private Date createdDate;
-    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss.SSS")
-    private Date updatedDate;
+    private String comment;
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private LocalDateTime createdDate;
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private LocalDateTime updatedDate;
 }
 

@@ -3,7 +3,10 @@ package com.example.forum.repository.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Entity
@@ -11,30 +14,20 @@ import java.util.Date;
 @Getter
 @Setter
 public class Comment {
+
     @Id
-    @Column
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Integer id;
 
-    private int contentId;
+    private int commentId;
     private int userId;
-    private String content;
+    private String comment;
 
-    @Column(name = "created_date")
-    private Date createdDate;
+    @CreationTimestamp
+    @Column(name = "created_date", updatable = false)
+    private LocalDateTime createdDate;
 
+    @UpdateTimestamp
     @Column(name = "updated_date")
-    private Date updatedDate;
-
-    @PrePersist
-    protected void onCreate() {
-        Date now = new Date();
-        createdDate = now;
-        updatedDate = now;
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedDate = new Date();
-    }
+    private LocalDateTime updatedDate;
 }

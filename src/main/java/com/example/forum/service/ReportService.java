@@ -25,10 +25,10 @@ public class ReportService {
      * レコード全件取得処理
      */
     public List<ReportForm> findAllReport() {
-        List<Report> results = reportRepository.findAllByOrderByIdDesc();
+        List<Report> results = reportRepository.findAllByOrderByUpdatedDateDesc();
         List<ReportForm> reports = setReportForm(results);
         for (ReportForm reportForm : reports) {
-            List<CommentForm> commentList = commentService.findCommentsByContentId(reportForm.getId());
+            List<CommentForm> commentList = commentService.findCommentsByCommentId(reportForm.getId());
             reportForm.setComments(commentList);
         }
         return reports;
@@ -89,5 +89,10 @@ public class ReportService {
         //results（Report型のリスト）を setReportForm() メソッドに渡している
         List<ReportForm> reports = setReportForm(results);
         return reports.get(0);
+    }
+
+    //更新日時を降順で。投稿一覧を取得する
+    public List<Report> findAllReportsOrderByUpdatedDateDesc(){
+        return reportRepository.findAllReportsOrderByUpdatedDateDesc;
     }
 }
