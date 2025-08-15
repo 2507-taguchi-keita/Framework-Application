@@ -93,6 +93,15 @@ public class ReportService {
 
     //更新日時を降順で。投稿一覧を取得する
     public List<Report> findAllReportsOrderByUpdatedDateDesc(){
-        return reportRepository.findAllReportsOrderByUpdatedDateDesc;
+        return reportRepository.findAllByOrderByUpdatedDateDesc();
+    }
+
+    //コメントに紐づく投稿を取得
+    public Report findReportById(Integer id) {
+        return reportRepository.findById(id).orElse(null);
+    }
+
+    public List<Report> findAllReports() {
+        return reportRepository.findAll(); // JpaRepository 等想定
     }
 }

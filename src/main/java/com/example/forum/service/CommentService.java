@@ -70,7 +70,7 @@ public class CommentService {
 
     // 特定投稿のコメント一覧取得
     public List<CommentForm> findCommentsByCommentId(int commentId) {
-        List<Comment> results = commentRepository.findByCommentIdOrderByUpdatedDateAsc(commentId);
+        List<Comment> results = commentRepository.findByCommentIdOrderByUpdatedDateDesc(commentId);
         return setCommentForm(results);
     }
 

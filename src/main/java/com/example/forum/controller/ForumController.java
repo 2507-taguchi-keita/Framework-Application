@@ -6,9 +6,12 @@ import com.example.forum.repository.entity.Comment;
 import com.example.forum.repository.entity.Report;
 import com.example.forum.service.CommentService;
 import com.example.forum.service.ReportService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.Banner;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -60,10 +63,15 @@ public class ForumController {
     }
 
     /*
-     * 新規投稿処理
+     * 新規投稿処理+エラー処理
      */
     @PostMapping("/add")
-    public ModelAndView addContent(@ModelAttribute("formModel") ReportForm reportForm) {
+    public ModelAndView addContent(@ModelAttribute("formModel") @Validated ReportForm reportForm, BindingResult result) {
+        if(result.hasErrors()){
+            ModelAndView mav = new ModelAndView("/new");
+            mav.addObject("formModel", reportForm);
+            return mav;
+        }
         Report report = new Report();
         report.setContent(reportForm.getContent());
         // 投稿をテーブルに格納
@@ -86,7 +94,7 @@ public class ForumController {
     //編集画面表示(編集ボタンを押した後)
     @GetMapping("/edit/{id}")
     //トップ画面から編集画面へ遷移したいので、idを引数として受け取り
-    public ModelAndView editContent(@PathVariable Integer id) {
+    public ModelAndView editContent(@PathVariable Integer id){
         //空のオブジェクトを生成し、この後でmav.addObjectのように中身を詰めていく
         ModelAndView mav = new ModelAndView();
         // 編集する投稿を取得
@@ -103,7 +111,12 @@ public class ForumController {
     //編集処理(更新ボタンを押下した時)
     @PutMapping("/update/{id}")
     //編集画面から、id および formModel の変数名で入力された投稿内容を受け取る
-    public ModelAndView editContent(@PathVariable Integer id, @ModelAttribute("formModel") ReportForm report) {
+    public ModelAndView editContent(@PathVariable Integer id, @ModelAttribute("formModel") @Validated ReportForm report, BindingResult result) {
+        if(result.hasErrors()){
+            ModelAndView mav = new ModelAndView("/edit");
+            mav.addObject("formModel", report);
+            return mav;
+        }
         // UrlParameterのidを更新するentityにセット
         report.setId(id);
         // 編集した投稿を更新
@@ -114,9 +127,22 @@ public class ForumController {
 
     //投稿へのコメント機能を追加(返信ボタンを押した後)
     @PostMapping("/comment/{commentId}")
-    public ModelAndView commentContent(@PathVariable Integer commentId, @ModelAttribute("formModel") CommentForm comment) {
+    public ModelAndView commentContent(@PathVariable Integer commentId, @ModelAttribute("commentForm") @Validated CommentForm commentForm, BindingResult result, HttpSession session) {
+        if (result.hasErrors()) {
+            session.setAttribute("reportID", commentForm.commentId);
+            ModelAndView mav = new ModelAndView("top");
+            mav.addObject("contents", reportService.findAllReport());
+            mav.addObject("commentForm", commentForm); //
+            return mav;
+        }
+        Report report = reportService.findReportById(commentId);
+        Comment comment = new Comment();
         comment.setCommentId(commentId);
-        commentService.saveComment(comment);
+        comment.setUserId(commentForm.getUserId());
+        comment.setComment(commentForm.getComment());
+
+        commentService.saveComment(comment, report);
+
         return new ModelAndView("redirect:/");
     }
 

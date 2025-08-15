@@ -12,8 +12,9 @@
 <div class="main-contents">
     <form th:action="@{/update/{id}(id=${formModel.id})}" th:object="${formModel}" th:method="put">
         <div class="form-area">
+            <span th:if="${#fields.hasErrors('content')}" th:errors="*{content}" style="color: red"></span><br>
             <label>編集内容</label>
-            <textarea class="tweet-box" th:field="*{content}" size="20" maxlength="200" /></textarea><br/>
+            <textarea class="tweet-box" th:field="*{content}" size="20" maxlength="200"></textarea><br/>
             <input type="submit" value="更新" />
         </div>
     </form>

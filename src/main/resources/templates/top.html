@@ -89,6 +89,7 @@
         <div class="comment">
             <form th:action="@{/comment/{commentId}(commentId=${content.id})}" method="post" th:object="${commentForm}">
                 <textarea class="tweet-box" th:field="*{comment}" size="20" maxlength="200"></textarea><br/>
+                <span th:if="${#fields.hasErrors('comment')}" th:errors="*{comment}" style="color: red"></span><br>
                 <input type="hidden" th:field="*{userId}" />
                 <input type="submit" value="返信">
             </form>

@@ -14,7 +14,7 @@ import java.util.List;
 public interface CommentRepository extends JpaRepository<Comment, Integer> {
     public List<Comment> findAllByOrderByUpdatedDateDesc();
     void deleteCommentById(Integer id);
-    List<Comment> findByCommentIdOrderByUpdatedDateAsc(int commentId);
+    List<Comment> findByCommentIdOrderByUpdatedDateDesc(int commentId);
     List<Comment> findByCreatedDateBetweenAndCommentIdNot(LocalDateTime start, LocalDateTime end, int commentId);
 
 }
