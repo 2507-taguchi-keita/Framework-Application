@@ -6,8 +6,9 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
+import java.util.List;
 
 @Entity
 @Table(name = "report")
@@ -17,22 +18,18 @@ public class Report {
     @Id
     @Column
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
-
+    private Integer id;
     @Column
     private String content;
 
     @CreationTimestamp
-    @Column(name = "created_date", updatable = false)
+    @Column(updatable = false)
     private LocalDateTime createdDate;
 
     @UpdateTimestamp
-    @Column(name = "updated_date")
     private LocalDateTime updatedDate;
 
-    public void setUpdatedTime(LocalDateTime now) {
-        this.updatedDate = now;
-    }
-
+    @OneToMany(mappedBy = "postId", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Comment> comments;
 }
 

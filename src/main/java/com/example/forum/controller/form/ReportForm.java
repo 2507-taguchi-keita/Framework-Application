@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.format.annotation.DateTimeFormat;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -13,7 +15,7 @@ import java.util.List;
 @Setter
 public class ReportForm {
 
-    private int id;
+    private Integer id;
     @NotBlank(message = "投稿内容を入力してください")
     private String content;
     @AssertTrue(message = "投稿内容を入力してください")
@@ -24,10 +26,9 @@ public class ReportForm {
     }
 
     @DateTimeFormat(pattern = "yyyy-MM-dd")
-    private Date createdDate;
+    private LocalDateTime createdDate;
     @DateTimeFormat(pattern = "yyyy-MM-dd")
-    private Date updatedDate;
+    private LocalDateTime updatedDate;
 
-    private List<CommentForm> comments;
 }
 

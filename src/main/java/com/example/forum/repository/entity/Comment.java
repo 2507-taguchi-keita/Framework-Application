@@ -1,13 +1,15 @@
 package com.example.forum.repository.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 @Entity
 @Table(name = "comment")
@@ -19,15 +21,17 @@ public class Comment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    private int commentId;
-    private int userId;
+    @Column(nullable = false)
+    private Integer postId;
+    private Integer userId;
+    @NotBlank(message = "コメントは必須です")
+    @Size(max = 200, message = "コメントは200文字以内で入力してください")
     private String comment;
 
     @CreationTimestamp
-    @Column(name = "created_date", updatable = false)
+    @Column(updatable = false)
     private LocalDateTime createdDate;
 
     @UpdateTimestamp
-    @Column(name = "updated_date")
     private LocalDateTime updatedDate;
 }

@@ -7,18 +7,25 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.format.annotation.DateTimeFormat;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 @Getter
 @Setter
 public class CommentForm {
 
     private Integer id;
-    public int commentId;
-    private int userId;
+    //投稿のID
+    private Integer postId;
+    private Integer userId;
     @NotBlank(message = "コメントを入力してください")
     private String comment;
+    @AssertTrue(message = "コメントを入力してください")
+    public boolean isContentValid() {
+        if (comment == null) return false;
+        // 半角・全角スペースを削除して判定
+        return !comment.replaceAll("\\s+", "").isEmpty();
+    }
 
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDateTime createdDate;

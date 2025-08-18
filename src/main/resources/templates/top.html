@@ -11,6 +11,9 @@
 </div>
 
 <div class="filter">
+    <div th:if="${dateError}" style="color: red; font-size: small; margin-top: 5px;">
+        <span th:text="${dateError}"></span>
+    </div>
     <form th:action="@{/date}" th:method="get">
         <input type="date" name="startDate" th:value="${startDate}">
         <input type="date" name="endDate" th:value="${endDate}">
@@ -23,19 +26,28 @@
         <button class="new-button" type="button">新規投稿</button>
     </a>
 
-    <!-- 日付で絞り込んだコメントを表示 -->
-    <div class="filtered-comments" th:if="${commentList != null and !commentList.isEmpty()}">
-        <h3>絞り込んだコメント</h3>
-        <div th:each="comment : ${commentList}">
+    <!-- 日付で絞り込んだ投稿を表示 -->
+    <div class="filtered-posts" th:if="${reports != null and !reports.isEmpty()}">
+        <h3>絞り込んだ投稿</h3>
+        <div th:each="report : ${reports}">
             <hr/>
-            <div>
-                投稿ID: <span th:text="${comment.commentId}"></span>
-            </div>
-            <div class="comment-comment">
-                コメント: <span th:text="${comment.comment}"></span>
-            </div>
+            <div>投稿ID: <span th:text="${report.id}"></span></div>
+            <div>投稿内容: <span th:text="${report.content}"></span></div>
             <div class="comment-date" style="font-size: small; color: gray;">
-                <span th:text="${comment.createdDate != null} ? ${#temporals.format(comment.createdDate, 'yyyy/MM/dd')} : ''"></span>
+                <span th:text="${report.createdDate != null} ? ${#temporals.format(report.createdDate, 'yyyy/MM/dd')} : ''"></span>
+            </div>
+
+            <!-- コメント表示 -->
+            <div class="replies" th:if="${report.comments != null and !report.comments.isEmpty()}">
+                <div th:each="comment : ${report.comments}">
+                    <hr/>
+                    <div class="comment-comment">
+                        <span th:text="${comment.comment}"></span>
+                    </div>
+                    <div class="comment-date" style="font-size: small; color: gray;">
+                        <span th:text="${comment.createdDate != null} ? ${#temporals.format(comment.createdDate, 'yyyy/MM/dd')} : ''"></span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -61,11 +73,11 @@
         </div>
 
         <!-- 返信コメントの表示 -->
-        <div class="replies" th:if="${content.comments != null and !content.comments.isEmpty()}">
-            <div th:each="comment : ${content.comments}">
+        <div class="replies">
+            <div th:each="comment : ${comments}" th:if="${comment.postId} == ${content.id}">
                 <hr/>
                 <div class="comment-comment">
-                    <span th:text="${comment.comment}"></span>
+                    返信 : <span th:text="${comment.comment}"></span>
                 </div>
                 <div class="comment-date" style="font-size: small; color: gray;">
                     <span th:text="${comment.createdDate != null} ? ${#temporals.format(comment.createdDate, 'yyyy/MM/dd')} : ''"></span>
@@ -86,14 +98,13 @@
         </div>
 
         <!-- 返信フォーム -->
-        <div class="comment">
-            <form th:action="@{/comment/{commentId}(commentId=${content.id})}" method="post" th:object="${commentForm}">
-                <textarea class="tweet-box" th:field="*{comment}" size="20" maxlength="200"></textarea><br/>
-                <span th:if="${#fields.hasErrors('comment')}" th:errors="*{comment}" style="color: red"></span><br>
-                <input type="hidden" th:field="*{userId}" />
-                <input type="submit" value="返信">
-            </form>
-        </div>
+        <form th:action="@{/comment/{postId}(postId=${content.id})}" method="post" th:object="${commentForm}">
+            <textarea class="tweet-box" th:field="*{comment}" size="20" maxlength="200"></textarea><br/>
+            <span th:if="${session.postId != null and session.postId == content.id}" th:errors="*{comment}" style="color: red"></span><br/>
+            <input type="hidden" th:field="*{userId}" />
+            <input type="hidden" th:field="*{postId}" th:value="${content.id}" />
+            <input type="submit" value="返信">
+        </form>
     </div>
 </div>
 </body>

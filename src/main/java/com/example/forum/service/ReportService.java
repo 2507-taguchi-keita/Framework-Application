@@ -8,6 +8,8 @@ import com.example.forum.repository.entity.Report;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import com.example.forum.repository.CommentRepository;
@@ -17,91 +19,109 @@ public class ReportService {
     @Autowired
     ReportRepository reportRepository;
     @Autowired
-    private CommentRepository commentRepository;
-
-    @Autowired
     CommentService commentService;
+
     /*
-     * レコード全件取得処理
+     * 投稿一覧取得（更新日時降順）　戻り値はList<ReportForm>なので、投稿の全部を取得している
      */
     public List<ReportForm> findAllReport() {
+        //ここでRepositryを呼んで、DBから全投稿をとってきて更新日時の降順で並べる
+        //Reportテーブルに対応したReportエンティティのリストをDBからRepositryがとってくる→それをresultsへ代入
         List<Report> results = reportRepository.findAllByOrderByUpdatedDateDesc();
-        List<ReportForm> reports = setReportForm(results);
-        for (ReportForm reportForm : reports) {
-            List<CommentForm> commentList = commentService.findCommentsByCommentId(reportForm.getId());
-            reportForm.setComments(commentList);
-        }
-        return reports;
+        //DBのReportはEntityのため、そのまま渡さずにFormリストに変換してControllerへ返す
+        return convertToFormList(results);
     }
 
     /*
-     * DBから取得したデータをFormに設定
+     * ↑の処理の続き＝画面表示用にデータを変換する　　Entity → Form に変換 & コメントをセット
      */
-    //setReportFormメソッドでEntity→Formに詰め直して、Controllerに戻しています
-    private List<ReportForm> setReportForm(List<Report> results) {
-        List<ReportForm> reports = new ArrayList<>();
-
-        for (int i = 0; i < results.size(); i++) {
-            ReportForm report = new ReportForm();
-            Report result = results.get(i);
-            report.setId(result.getId());
-            report.setContent(result.getContent());
-            reports.add(report);
+    private List<ReportForm> convertToFormList(List<Report> results) {
+        //変換後の ReportForm を入れる空のリストを作る new ArrayList<>()で空のリストを作る。
+        List<ReportForm> forms = new ArrayList<>();
+        //DBから取り出したReportのリストを一件ずつ取り出して処理する
+        for (Report report : results) {
+            //もし投稿が存在しないなら、このループはスキップして先に進める処理
+            if (report == null) continue;
+            //ここでformを使うのは、全投稿を表すものとしてformsを使い、一件ずつ読み取る処理の中ではformを使いたいから
+            ReportForm form = new ReportForm();
+            //DBから取得したID,投稿内容、日時をReportFormへセット
+            form.setId(report.getId());
+            form.setContent(report.getContent());
+            form.setCreatedDate(report.getCreatedDate());
+            form.setUpdatedDate(report.getUpdatedDate());
+            //完成したReportFormをform(List<ReportForm>)へ追加。
+            forms.add(form);
         }
-        return reports;
+        return forms;
     }
 
     /*
-     * レコード追加・編集機能
+     * 投稿追加・更新　　reqReportはユーザーが考えたもの
      */
     public void saveReport(ReportForm reqReport) {
-        Report saveReport = setReportEntity(reqReport);
-        //saveメソッドは新規登録（insert）、更新（update）の両方が使える→更新のメソッドは不要
-        reportRepository.save(saveReport);
+        //DB に保存するための Entity（Reportクラス） を入れる箱を作っている
+        Report report;
+        //ReportFormにIDがあるなら更新し、なければ作る。
+        if (reqReport.getId() != null) {
+            // 既存投稿なら DB から取得して更新し、DBに存在しなければ例外を投げる
+            //-> new IllegalArgumentException("投稿が存在しません"))→ラムダ式　引数の例外を返す処理
+            report = reportRepository.findById(reqReport.getId()).orElseThrow(() -> new IllegalArgumentException("投稿が存在しません"));
+        } else {
+            // 新規投稿の場合、Entityクラスの空のオブジェクトを作る。
+            report = new Report();
+            //作成した時間をセットする
+            report.setCreatedDate(LocalDateTime.now());
+        }
+        //入力された本文をreportに入れる
+        report.setContent(reqReport.getContent());
+        report.setUpdatedDate(LocalDateTime.now());
+        //DBにReportを保存する。新規なら追加し、既存なら更新する
+        reportRepository.save(report);
     }
 
     /*
-     * リクエストから取得した情報をEntityに設定
+     * 投稿削除
      */
-    private Report setReportEntity(ReportForm reqReport) {
-        Report report = new Report();
-        report.setId(reqReport.getId());
-        report.setContent(reqReport.getContent());
-        return report;
-    }
-
-    //削除機能
     public void deleteReport(Integer id) {
-        //deleteById=引数に該当するレコードを削除
         reportRepository.deleteById(id);
     }
 
     /*
-     * レコードを1件取得
+     * 投稿1件取得（編集用）して、Form(画面表示用のhtmlと関わるクラス)に変換する
      */
     public ReportForm editReport(Integer id) {
-        //Report オブジェクトをたくさん入れるための空のリストを作っている
-        List<Report> results = new ArrayList<>();
-        //findById = Id が一致するレコードを取得するような処理.
-        // Id が合致しないときは null を返したいので、orElse(null)を使う
-        //reportRepository~~の結果をReport型に変換して追加する処理
-        results.add((Report) reportRepository.findById(id).orElse(null));
-        //results（Report型のリスト）を setReportForm() メソッドに渡している
-        List<ReportForm> reports = setReportForm(results);
-        return reports.get(0);
+        //Report reportは、DBのテーブルに対応しているクラス名にする必要があるため
+        Report report = reportRepository.findById(id).orElse(null);
+        //DBにそのIDの投稿がなければnullを返す
+        if (report == null) return null;
+        //上記のRepositryからとってきた情報をFormにセットする→Entity は DB 用で、バリデーションや入力用の補助がないことが多いため
+        ReportForm form = new ReportForm();
+        form.setId(report.getId());
+        form.setContent(report.getContent());
+        form.setCreatedDate(report.getCreatedDate());
+        form.setUpdatedDate(report.getUpdatedDate());
+        // コメントもセット（画面内で投稿とコメントをまとめて表示できるようにするため
+//        form.setComments(commentService.findCommentsByPostId(report.getId()));
+        return form;
     }
 
-    //更新日時を降順で。投稿一覧を取得する
-    public List<Report> findAllReportsOrderByUpdatedDateDesc(){
-        return reportRepository.findAllByOrderByUpdatedDateDesc();
+    /*
+     * 日付で投稿を絞り込み(指定された開始日時〜終了日時の間に作成された投稿だけを取得して、フォーム用のオブジェクトリストに変換する)
+     */
+    public List<ReportForm> findByCreatedDateBetween(LocalDateTime start, LocalDateTime end) {
+        //複数の投稿が対象になるため、List型にして、DBからstart,endのEntityを取得する
+        List<Report> reports = reportRepository.findByCreatedDateBetween(start, end);
+        //EntityからFormに変換する　List<Report>からList<ReportForm>へ
+        //reports という名前は絞り込みメソッド内の変数名
+        //convertToFormList 内ではそれを results という名前で受け取るだけ
+        return convertToFormList(reports);
     }
 
-    //コメントに紐づく投稿を取得
+    /*
+     * 投稿へのコメント機能を追加する処理から呼ばれている　　　コメントに紐づく投稿を取得するためのメソッド
+     */
+    //reportRepository.findById(id) … DB の Report テーブルから指定した ID の投稿を取得
     public Report findReportById(Integer id) {
         return reportRepository.findById(id).orElse(null);
-    }
-
-    public List<Report> findAllReports() {
-        return reportRepository.findAll(); // JpaRepository 等想定
     }
 }
